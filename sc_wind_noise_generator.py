@@ -29,7 +29,6 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import time
 import numpy as np
 import scipy as sp
 from scipy import signal
@@ -93,6 +92,7 @@ class WindNoiseGenerator:
         if self.calm_mask is not None and np.any(self.calm_mask):
             exc_filtered *= self._build_calm_gain(self.calm_mask)
 
+        # TODO: scale to match the actual wind noise level on the Zylia
         exc_filtered = 97335 * exc_filtered
 
         return exc_filtered, wind_profile
@@ -558,49 +558,3 @@ class WindNoiseGenerator:
         if n_mics == 1:
             fig.tight_layout()
         plt.show()
-
-    def play_signal(self, wns):
-        """
-        Play the generated wind noise.
-
-        Example: 
-          wn = WindNoiseGenerator(fs=48000, duration=10)
-          wn_sample = wn.generate_wind_noise()
-          wn.play_signal(wn_sample)
-        """
-
-        sd.play(wns, self.fs)
-        time.sleep(self.duration)
-        sd.stop()
-
-    def save_signal(self, wns, filename=None, print_log=False, num_ch=1, fs=48000):
-        """
-        Save the generated wind noise in a wave file.
-
-        Example: 
-          wn = WindNoiseGenerator(Fs=16000, duration=10)
-          wn_sample = wn.generate_wind_noise()
-          wn.save_signal(wn_sample)
-        """
-
-        if filename is None:
-            local_time = time.localtime(time.time())
-            filename = (
-                f'wind_noise_{fs // 1000}kHz_'
-                f'{local_time.tm_mday}'
-                f'{local_time.tm_mon}'
-                f'{local_time.tm_hour}'
-                f'{local_time.tm_min}'
-                f'{local_time.tm_sec}.wav'
-            )
-       
-        if fs != 48000:
-            wns = signal.resample(wns, int(self.duration * fs))
-
-        if num_ch == 2:
-            wns = np.array([wns, wns])
-
-        sf.write(filename, wns.T, fs)
-
-        if print_log:
-            print(f'Audio file "{filename}" saved correctly in the working directory')
